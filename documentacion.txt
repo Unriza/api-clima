@@ -1,0 +1,26 @@
+# Aplicación Web del Clima Responsiva
+
+Aplicación ligera desarrollada con Python (Flask), HTML5 y CSS3 que consulta datos meteorológicos en tiempo real utilizando la API pública y gratuita de Open-Meteo.
+
+## Requisitos de Ejecución
+1. Instalar dependencias necesarias:
+   ```bash
+   pip install flask requests
+   ```
+2. Ejecutar la aplicación:
+   ```bash
+   python app.py
+   ```
+3. Abrir en el navegador web: `http://127.0.0.1:5000`
+
+## Ejecución de Pruebas
+Para verificar la estabilidad del código, ejecuta:
+```bash
+python -m unittest test_app.py
+```
+
+## Consideraciones Éticas, de Seguridad y uso de IA
+- **Uso Responsable de APIs**: Se implementó una arquitectura de *Caché* local en el servidor. Esto evita saturar los servidores de Open-Meteo con llamadas idénticas recurrentes, respetando sus políticas de uso justo.
+- **Seguridad en Entrada de Datos**: Se utiliza `encodeURIComponent` en el Frontend y saneamiento de cadenas (`.strip()`) en el Backend para mitigar vulnerabilidades de inyección de parámetros en las URLs.
+- **Atribución de IA**: Este código fue co-creado y refinado mediante un modelo de Inteligencia Artificial para fines educativos y de desarrollo rápido, validando manualmente la lógica de las llamadas HTTP y la adaptabilidad móvil del CSS.
+- **Licencia**: Código liberado bajo la Licencia MIT (Software Libre).

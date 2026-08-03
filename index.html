@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App del Clima </title>
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            --card-bg: rgba(255, 255, 255, 0.1);
+            --card-border: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+            padding: 20px;
+        }
+
+        .container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        h1 { margin-bottom: 20px; font-weight: 400; }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 1px solid var(--card-border);
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input::placeholder { color: rgba(255, 255, 255, 0.6); }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            background: #00c6ff;
+            background: -webkit-linear-gradient(to right, #0072ff, #00c6ff);
+            background: linear-gradient(to right, #0072ff, #00c6ff);
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        button:hover { transform: scale(1.03); }
+
+        .error-message {
+            color: #ff6b6b;
+            margin-top: 15px;
+            display: none;
+            background: rgba(255, 107, 107, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .resultado { display: none; margin-top: 20px; }
+
+        .ciudad-titulo { font-size: 24px; margin-bottom: 15px; color: #00c6ff; }
+
+        /* Grilla Responsiva para el pronóstico de varios días */
+        .pronostico-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .dia-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .dia-card p { margin: 5px 0; }
+        .temp-max { color: #ffbc00; font-weight: bold; }
+        .temp-min { color: #00f3ff; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>App del Clima</h1>
+        <div class="search-box">
+            <input type="text" id="ciudadInput" placeholder="Ej. Bogota, Madrid...">
+            <button onclick="buscarClima()">Buscar</button>
+        </div>
+
+        <div id="error" class="error-message"></div>
+
+        <div id="resultado" class="resultado">
+            <div id="ciudadNombre" class="ciudad-titulo"></div>
+            <div id="pronosticoContenedor" class="pronostico-grid"></div>
+        </div>
+    </div>
+
+    <script>
+        async function buscarClima() {
+            const ciudad = document.getElementById('ciudadInput').value;
+            const errorDiv = document.getElementById('error');
+            const resultadoDiv = document.getElementById('resultado');
+            const pronosticoContenedor = document.getElementById('pronosticoContenedor');
+
+            // Resetear vistas
+            errorDiv.style.display = 'none';
+            resultadoDiv.style.display = 'none';
+            pronosticoContenedor.innerHTML = '';
+
+            if(!ciudad) {
+                mostrarError("Por favor, escribe una ciudad.");
+                return;
+            }
+
+            try {
+                const respuesta = await fetch(`/clima?ciudad=${encodeURIComponent(ciudad)}`);
+                const datos = await respuesta.json();
+
+                // Manejo de errores devueltos por el backend
+                if (!respuesta.ok) {
+                    mostrarError(datos.error || "Error al obtener datos.");
+                    return;
+                }
+
+                // Renderizar interfaz
+                document.getElementById('ciudadNombre').innerText = datos.ciudad;
+                
+                datos.pronostico.forEach(dia => {
+                    const card = document.createElement('div');
+                    card.className = 'dia-card';
+                    card.innerHTML = `
+                        <p style="font-weight:bold;">${formatearFecha(dia.fecha)}</p>
+                        <p>☀️ Código: ${dia.codigo}</p>
+                        <p class="temp-max">Máx: ${dia.max}°C</p>
+                        <p class="temp-min">Mín: ${dia.min}°C</p>
+                    `;
+                    pronosticoContenedor.appendChild(card);
+                });
+
+                resultadoDiv.style.display = 'block';
+
+            } catch (err) {
+                mostrarError("No se pudo conectar con el servidor web.");
+            }
+        }
+
+        function mostrarError(mensaje) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.innerText = mensaje;
+            errorDiv.style.display = 'block';
+        }
+
+        function formatearFecha(fechaStr) {
+            const opciones = { weekday: 'short', day: 'numeric' };
+            return new Date(fechaStr + 'T00:00:00').toLocaleDateString('es-ES', opciones);
+        }
+    </script>
+</body>
+</html>
